@@ -1,7 +1,9 @@
-import sys
+"""Simple torrent client"""
 from argparse import ArgumentParser
 
-if __name__ == '__main__':
+from pybt.torrentfile import torrentfile
+
+if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-i", "--input", action="store", help="Torrent file", required=True)
     parser.add_argument("-o", "--output", action="store", help="Filename to save to", required=True)
@@ -10,3 +12,5 @@ if __name__ == '__main__':
 
     torrent_filename = args.input
     output_filename = args.output
+
+    torrentfile.open_file(torrent_filename)
