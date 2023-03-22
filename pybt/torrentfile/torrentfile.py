@@ -1,5 +1,8 @@
 """Classes and functions for working with torrent files"""
+import hashlib
+
 from pbencode import decode as bencode_decode
+from pbencode import encode as bencode_encode
 
 
 class TorrentFile:
@@ -35,6 +38,30 @@ class BencodeInfo:
     length: int
     name: str
 
+    def hash(self):
+        return hashlib.sha1(
+            bencode_encode(
+                {
+                    b"length": self.length,
+                    b"name": self.name.encode(),
+                    b"piece length": self.piecelength,
+                    b"pieces": self.pieces,
+                }
+            )
+        ).digest()
+
+    def split_piece_hashes(self):
+        if len(self.pieces) % 20 != 0:
+            raise Exception("Received malformed pieces of length %d", len(self.pieces))
+
+        num_hashes = len(self.pieces) // 20
+
+        hashes = []
+
+        for i in range(num_hashes):
+            hashes.append(self.pieces[i * 20 : (i + 1) * 20])
+        return hashes
+
 
 class BencodeTorrent:
     """Tracking the download of a torrent and how to tell peers"""
@@ -49,7 +76,7 @@ class BencodeTorrent:
     def torrent_file(self) -> TorrentFile:
         infohash = self.info.hash()
 
-        piecehashes = self.info.splitPieceHashes()
+        piecehashes = self.info.split_piece_hashes()
 
         return TorrentFile(
             announce=self.announce,
